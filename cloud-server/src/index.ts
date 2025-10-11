@@ -5,6 +5,7 @@ import cluster from 'cluster'
 import { createServer } from 'http'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes'
+import instanceRoutes from './routes/instance.routes'
 import { PORT } from './config/config'
 import { connectDB } from './db/mongo/init'
 
@@ -71,6 +72,7 @@ if (cluster.isPrimary) {
   })
 
   app.use('/api/v1/auth', authRoutes)
+  app.use('/api/v1/instance', instanceRoutes)
 
   server.listen(PORT, async () => {
     console.log(`Worker process ${process.pid} started on port ${PORT}`)

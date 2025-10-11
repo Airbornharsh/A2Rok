@@ -8,9 +8,10 @@ const router: Router = express.Router()
 router.get('/user', Middleware.authMiddleware, AuthController.getUser)
 router.post('/session', AuthController.createTerminalSession)
 router.post(
-  '/session/:sessionId',
+  '/session/:token',
   Middleware.authMiddleware,
   AuthController.completeTerminalSession,
 )
+router.get('/session/:sessionId', AuthController.checkTerminalSession)
 
 export default router

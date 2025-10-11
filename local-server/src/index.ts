@@ -1,20 +1,22 @@
+import loginCommand from './commands/login'
+import userCommand from './commands/user'
+import logoutCommand from './commands/logout'
+import httpCommand from './commands/http'
+
 const args = process.argv.slice(2)
 
 switch (args[0]) {
   case 'user':
-    console.log('User...')
+    userCommand()
     break
   case 'login':
-    console.log('Login...')
-    break
-  case 'register':
-    console.log('Register...')
+    loginCommand()
     break
   case 'logout':
-    console.log('Logout...')
+    logoutCommand()
     break
   case 'http':
-    console.log('HTTP...')
+    httpCommand()
     break
   case 'https':
     console.log('HTTPS...')

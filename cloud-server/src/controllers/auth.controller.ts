@@ -3,6 +3,7 @@ import { db } from '../db/mongo/init'
 import { ClerkService } from '../services/clerk.service'
 import { v4 } from 'uuid'
 import { IUser } from '../db/mongo/models/User.schema'
+import JwtService from '../services/jwt.service'
 
 class AuthController {
   static async getUser(req: Request, res: Response) {
@@ -56,7 +57,8 @@ class AuthController {
     try {
       const uuid1 = v4()
       const uuid2 = v4()
-      const token = uuid1 + ':' + uuid2
+      const uuid3 = v4()
+      const token = uuid1 + ':' + uuid2 + ':' + uuid3
       const session = await db?.TerminalSessionModel.create({
         token,
       })
@@ -89,8 +91,8 @@ class AuthController {
   static async completeTerminalSession(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId
-      const sessionId = req.params.sessionId
-      const session = await db?.TerminalSessionModel.findById(sessionId).lean()
+      const token = req.params.token
+      const session = await db?.TerminalSessionModel.findOne({ token }).lean()
       if (!session || !session?._id) {
         res.status(404).json({
           success: false,
@@ -99,7 +101,7 @@ class AuthController {
         return
       }
 
-      if (session.status !== 'active') {
+      if (session.status === 'active') {
         res.status(400).json({
           success: false,
           message: 'Session already used',
@@ -108,7 +110,7 @@ class AuthController {
       }
 
       await db?.TerminalSessionModel.updateOne(
-        { _id: sessionId },
+        { _id: session._id },
         { $set: { userId, status: 'active' } },
       )
 
@@ -139,18 +141,31 @@ class AuthController {
         return
       }
 
-      res.json({
-        success: true,
-        message: 'Session checked successfully',
-        data: {
-          valid: session.status === 'active',
+      if (!session.userId || !(session.userId as IUser).email) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+        })
+        return
+      }
+
+      let token = ''
+      if (session.status === 'active') {
+        const generatedToken = await JwtService.generateToken({
           email: (session.userId as IUser).email,
-        },
-      })
+          sessionId: session._id.toString(),
+        })
+        token = generatedToken
+      }
 
       res.json({
         success: true,
         message: 'Session checked successfully',
+        data: {
+          valid: session.userId ? session.status : false,
+          email: (session.userId as IUser).email,
+          token,
+        },
       })
     } catch (error) {
       console.error('Check session error:', error)

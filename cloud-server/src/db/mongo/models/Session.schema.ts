@@ -28,4 +28,6 @@ const TerminalSessionSchema = new mongoose.Schema(
   },
 )
 
+TerminalSessionSchema.index({ token: 1 }, { unique: true })
+
 export default TerminalSessionSchema

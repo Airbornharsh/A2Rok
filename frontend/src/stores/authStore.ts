@@ -2,6 +2,7 @@ import { AxiosClient } from '@/utils/axios'
 import { User } from '@/types/auth'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getTerminalToken } from '@/utils/session'
 
 interface AuthState {
   isUserLoaded: boolean
@@ -11,12 +12,16 @@ interface AuthState {
   isLoading: boolean
   error: string | null
 
+  isTerminalSessionLoading: boolean
+
   // Actions
   setUser: (user: User | null) => void
   setToken: (token: string | null) => void
   setIsAuthenticated: (isAuthenticated: boolean) => void
   getUser: () => Promise<void>
   logout: () => void
+  completeTerminalSession: () => Promise<void>
+  checkLocalTerminalSession: () => boolean
   clearError: () => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
@@ -31,6 +36,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      isTerminalSessionLoading: false,
 
       setUser: (user: User | null) => {
         set({ user })
@@ -74,6 +80,25 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           error: null,
         })
+      },
+
+      completeTerminalSession: async () => {
+        set({ isTerminalSessionLoading: true })
+        try {
+          await AxiosClient.post(`/api/v1/auth/session/${getTerminalToken()}`)
+        } catch (error) {
+          console.error('Error completing terminal session:', error)
+        } finally {
+          set({ isTerminalSessionLoading: false })
+        }
+      },
+
+      checkLocalTerminalSession: () => {
+        const token = getTerminalToken()
+        if (token) {
+          return true
+        }
+        return false
       },
 
       clearError: () => {
