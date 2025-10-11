@@ -1,0 +1,21 @@
+{
+  "name": "a2rok",
+  "version": "1.0.0",
+  "description": "This is helpful for tunneling localhost to internet",
+  "license": "ISC",
+  "author": "Harsh Keshri",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -b",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "inquirer": "^12.9.6",
+    "open": "^10.2.0"
+  }
+}
