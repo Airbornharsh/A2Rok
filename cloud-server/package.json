@@ -22,12 +22,14 @@
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.1",
     "svix": "^1.76.1",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/ws": "^8.18.1",
     "typescript": "^5.9.3"
   }
 }

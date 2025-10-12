@@ -7,7 +7,10 @@ import cors from 'cors'
 import authRoutes from './routes/auth.routes'
 import instanceRoutes from './routes/instance.routes'
 import { PORT } from './config/config'
-import { connectDB } from './db/mongo/init'
+import { connectDB, db } from './db/mongo/init'
+import { WebSocketService } from './services/websocket.service'
+import { v4 as uuidv4 } from 'uuid'
+import DomainMiddleware from './middlewares/domain.middleware'
 
 const numCPUs = Number(process.env.CLUSTERS) || 1
 
@@ -41,8 +44,7 @@ if (cluster.isPrimary) {
   const app = express()
   const server = createServer(app)
 
-  // const wsService = WebSocketService
-  // wsService.initialize(server, '/ws')
+  WebSocketService.getInstance().initialize(server, '/ws')
 
   connectDB()
 
@@ -60,15 +62,13 @@ if (cluster.isPrimary) {
 
   app.use(express.static('public'))
 
-  app.get('/api/v1/health', (req, res) => {
-    res.send('OK')
-  })
+  app.use(DomainMiddleware.domainMiddleware)
 
   app.get('/', (req, res) => {
-    console.log(req.params)
-    console.log(req.body)
-    console.log(req.query)
     res.send('Server is running')
+  })
+  app.get('/api/v1/health', (req, res) => {
+    res.send('OK')
   })
 
   app.use('/api/v1/auth', authRoutes)

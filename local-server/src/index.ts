@@ -3,9 +3,9 @@ import userCommand from './commands/user'
 import logoutCommand from './commands/logout'
 import httpCommand from './commands/http'
 
-const args = process.argv.slice(2)
+const args = process.argv
 
-switch (args[0]) {
+switch (args[2]) {
   case 'user':
     userCommand()
     break
@@ -16,7 +16,7 @@ switch (args[0]) {
     logoutCommand()
     break
   case 'http':
-    httpCommand()
+    httpCommand(args)
     break
   case 'https':
     console.log('HTTPS...')

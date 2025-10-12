@@ -8,3 +8,7 @@ export const setTerminalToken = (terminalToken: string) => {
     localStorage.setItem('a2rok_terminalToken', terminalToken)
   }
 }
+
+export const clearTerminalToken = () => {
+  localStorage.removeItem('a2rok_terminalToken')
+}

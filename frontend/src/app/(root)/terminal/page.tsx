@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuthStore } from '@/stores/authStore'
+import { clearTerminalToken } from '@/utils/session'
 import { useUser } from '@clerk/nextjs'
 import { Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -33,7 +34,7 @@ const Page = () => {
 
   useEffect(() => {
     if (linked) {
-      window.close()
+      clearTerminalToken()
     }
   }, [linked, completeTerminalSession])
 

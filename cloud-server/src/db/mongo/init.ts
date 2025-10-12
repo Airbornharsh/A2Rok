@@ -6,6 +6,7 @@ import UserSchema, { IUser } from './models/User.schema'
 import TerminalSessionSchema, {
   ITerminalSession,
 } from './models/Session.schema'
+import DomainSchema, { IDomain } from './models/Domain.schema'
 
 mongoose.set('strictQuery', false)
 
@@ -15,6 +16,7 @@ let db: Db | null = null
 interface Db {
   UserModel: Model<IUser>
   TerminalSessionModel: Model<ITerminalSession>
+  DomainModel: Model<IDomain>
 }
 
 const connectDB = async () => {
@@ -31,9 +33,12 @@ const connectDB = async () => {
       TerminalSessionSchema,
     )
 
+    const DomainModel = dbConnection.model<IDomain>('Domain', DomainSchema)
+
     db = {
       UserModel,
       TerminalSessionModel,
+      DomainModel,
     }
   } catch (error: any) {
     console.log(error)

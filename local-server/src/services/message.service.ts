@@ -1,0 +1,31 @@
+import ReqMessageService from './reqMessage.service'
+
+let domainMetadata = {
+  ttl: 0,
+  opn: 0,
+}
+
+class MessageService {
+  static handleRequestMessage(
+    message: { type: string; data: any },
+    ws: WebSocket,
+  ) {
+    switch (message.type) {
+      case 'connection_established':
+        break
+      case 'subdomain_request':
+        ReqMessageService.handleSubdomainRequest(message.data, ws)
+        break
+      case 'domain_metadata':
+        domainMetadata.ttl = message.data.ttl || 0
+        domainMetadata.opn = message.data.opn || 0
+        break
+    }
+  }
+
+  static getDomainMetadata() {
+    return domainMetadata
+  }
+}
+
+export default MessageService

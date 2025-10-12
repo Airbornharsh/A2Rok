@@ -2,6 +2,7 @@ import { db } from '../db/mongo/init'
 import { clerkClient } from '@clerk/express'
 import { Request } from 'express'
 import { IUser } from '../db/mongo/models/User.schema'
+import DomainService from './domain.service'
 
 export class ClerkService {
   static async verifyToken(token: string) {
@@ -86,6 +87,7 @@ export class ClerkService {
           if (!newUser || !newUser._id) {
             throw new Error('Failed to create user in database.')
           }
+          await DomainService.createDomain(newUser._id.toString())
           return newUser
         } catch (error) {
           // console.error('Failed to create user in database.')

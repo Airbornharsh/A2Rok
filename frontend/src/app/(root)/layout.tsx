@@ -1,10 +1,11 @@
 'use client'
+import Sidebar from '@/components/Sidebar'
 import { useAuthStore } from '@/stores/authStore'
 import { setTerminalToken } from '@/utils/session'
 import { useAuth, useUser } from '@clerk/nextjs'
 import { Loader2 } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useMemo, useRef } from 'react'
 
 export default function RootLayout({
   children,
@@ -14,9 +15,8 @@ export default function RootLayout({
   const { isLoaded, user: clerkUser } = useUser()
   const { getToken } = useAuth()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const token = searchParams.get('token')
-  //   const user = useAuthStore((state) => state.user)
-  //   const isUserLoaded = useAuthStore((state) => state.isUserLoaded)
   const getUser = useAuthStore((state) => state.getUser)
   const setToken = useAuthStore((state) => state.setToken)
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated)
@@ -64,6 +64,10 @@ export default function RootLayout({
     }
   }, [token])
 
+  const isLoadSidebar = useMemo(() => {
+    return pathname !== '/auth' && pathname !== '/terminal'
+  }, [pathname])
+
   if (!isLoaded) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -72,5 +76,10 @@ export default function RootLayout({
     )
   }
 
-  return <div className="h-screen">{children}</div>
+  return (
+    <div className="flex h-screen">
+      {isLoadSidebar && <Sidebar />}
+      <div className="flex-1">{children}</div>
+    </div>
+  )
 }

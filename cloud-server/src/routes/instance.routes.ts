@@ -9,5 +9,20 @@ instanceRoutes.get(
   Middleware.authMiddleware,
   InstanceController.getHttp,
 )
+instanceRoutes.get(
+  '/domains',
+  Middleware.authMiddleware,
+  InstanceController.getDomains,
+)
+instanceRoutes.get(
+  '/domains/:id',
+  Middleware.authMiddleware,
+  InstanceController.getDomain,
+)
+instanceRoutes.post(
+  '/domains',
+  Middleware.authMiddleware,
+  InstanceController.createDomain,
+)
 
 export default instanceRoutes
