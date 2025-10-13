@@ -1,10 +1,10 @@
 import { WebSocketServer, WebSocket } from 'ws'
-import { Response } from 'express'
 import { Server } from 'http'
 import { db } from '../db/mongo/init'
 import DomainService from './domain.service'
 import JwtService from './jwt.service'
 import { SubdomainResponse } from '../types/instance'
+import CompressionService from './compression.service'
 
 interface UserConnection {
   userId: string
@@ -194,7 +194,7 @@ export class WebSocketService {
     data: any,
   ): Promise<void> {
     try {
-      const message = JSON.parse(data.toString())
+      const message = CompressionService.decompressMessage(data)
       const connection = this.domainConnections.get(domain)
 
       if (!connection || connection.userId !== userId) return
@@ -268,7 +268,7 @@ export class WebSocketService {
 
       try {
         connection.ws.send(
-          JSON.stringify({
+          CompressionService.compressMessage({
             type: type,
             data: data,
           }),
@@ -297,7 +297,7 @@ export class WebSocketService {
     this.increaseDomainOpn(subdomain)
 
     domainConnection.ws.send(
-      JSON.stringify({
+      CompressionService.compressMessage({
         type: 'subdomain_request',
         data: {
           pendingResponseId: pendingResponseId,
@@ -402,7 +402,7 @@ export class WebSocketService {
     const metadata = this.domainMetadataStorage.get(domain)
     if (connection) {
       connection.ws.send(
-        JSON.stringify({
+        CompressionService.compressMessage({
           type: 'domain_metadata',
           data: {
             ttl: metadata?.ttl || 0,

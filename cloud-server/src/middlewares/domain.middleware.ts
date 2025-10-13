@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import { db } from '../db/mongo/init'
 import { WebSocketService } from '../services/websocket.service'
 import { v4 as uuidv4 } from 'uuid'
+import Cache from '../services/cache.service'
 
 class DomainMiddleware {
   static async domainMiddleware(
@@ -22,7 +23,14 @@ class DomainMiddleware {
       subdomain !== '127.0.0.1' &&
       !subdomain.match(/^\d+\.\d+\.\d+\.\d+$/)
     ) {
-      const domain = await db?.DomainModel.findOne({ domain: subdomain }).lean()
+      const cacheKey = `domain:${subdomain}`
+      let domain: any = Cache.get(cacheKey)
+      if (!domain) {
+        domain = await db?.DomainModel.findOne({ domain: subdomain }).lean()
+        if (domain) {
+          Cache.set(cacheKey, domain, 60_000) // cache for 60s
+        }
+      }
       if (!domain) {
         res.status(404).json({
           success: false,

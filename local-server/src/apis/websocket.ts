@@ -1,4 +1,5 @@
 import { WSS_BACKEND_URL } from '../config/config'
+import CompressionService from '../services/compression.service'
 import MessageService from '../services/message.service'
 import Session from '../utils/session'
 
@@ -8,11 +9,11 @@ let wsConnectionState = {
   lastMessage: 'Waiting for connection...',
 }
 
-const connectWebSocket = async (port: number) => {
+const connectWebSocket = async (port: number): Promise<WebSocket | null> => {
   const session = await Session.getSession()
   if (!session) {
     console.error('Session not found')
-    return
+    return null
   }
 
   wsConnectionState.lastMessage = 'Connecting to WebSocket server...'
@@ -21,14 +22,29 @@ const connectWebSocket = async (port: number) => {
     `${WSS_BACKEND_URL}?token=${session.token}&port=${port}`,
   )
 
+  // Ensure we receive binary frames for compressed messages
+  ;(ws as any).binaryType = 'arraybuffer'
+
   ws.onopen = () => {
     wsConnectionState.connected = true
     wsConnectionState.lastMessage = 'WebSocket connected successfully'
   }
 
-  ws.onmessage = (event) => {
+  ws.onmessage = async (event) => {
     try {
-      const message = JSON.parse(event.data)
+      let binary: Buffer
+      if (event.data instanceof ArrayBuffer) {
+        binary = Buffer.from(new Uint8Array(event.data))
+      } else if (typeof Blob !== 'undefined' && event.data instanceof Blob) {
+        const ab = await event.data.arrayBuffer()
+        binary = Buffer.from(new Uint8Array(ab))
+      } else if (Buffer.isBuffer(event.data)) {
+        binary = event.data
+      } else {
+        binary = Buffer.from(event.data)
+      }
+
+      const message = CompressionService.decompressMessage(binary)
       wsConnectionState.lastMessage = `Received: ${message.type}`
       MessageService.handleRequestMessage(message, ws)
     } catch (error) {

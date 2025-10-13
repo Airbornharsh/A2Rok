@@ -1,4 +1,5 @@
 import { SubdomainRequest, SubdomainResponse } from '../types/instance'
+import CompressionService from './compression.service'
 
 class ReqMessageService {
   static async handleSubdomainRequest(
@@ -50,7 +51,7 @@ class ReqMessageService {
       }
 
       ws.send(
-        JSON.stringify({
+        CompressionService.compressMessage({
           type: 'subdomain_response',
           data: res,
         }),
@@ -75,7 +76,7 @@ class ReqMessageService {
       }
 
       ws.send(
-        JSON.stringify({
+        CompressionService.compressMessage({
           type: 'subdomain_response',
           data: errorResponse,
         }),
