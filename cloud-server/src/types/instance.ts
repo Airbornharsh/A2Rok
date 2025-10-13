@@ -23,4 +23,6 @@ export interface SubdomainResponse {
   statusText: string
   headers: Record<string, string>
   body: any
+  contentType?: string
+  isBase64?: boolean
 }

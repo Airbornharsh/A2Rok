@@ -16,10 +16,12 @@ class ReqMessageService {
       }
     }
 
+    const { connection, ...headers } = data.headers
+
     const fetchOptions: RequestInit = {
       method: data.method,
       headers: {
-        ...data.headers,
+        ...headers,
         host: 'localhost' + ':' + data.port,
       },
     }
@@ -34,12 +36,35 @@ class ReqMessageService {
         fetchOptions,
       )
       const headers = Object.fromEntries(response.headers.entries())
-      const responseBody =
-        (await response.json()) ||
-        (await response.text()) ||
-        (await response.blob()) ||
-        (await response.arrayBuffer()) ||
-        (await response.formData())
+
+      const contentType =
+        headers['content-type'] || headers['Content-Type'] || ''
+      let body: any
+      let isBase64 = false
+      try {
+        if (contentType.includes('application/json')) {
+          body = await response.json()
+        } else if (
+          contentType.startsWith('text/') ||
+          contentType.includes('application/xml') ||
+          contentType.includes('application/xhtml+xml')
+        ) {
+          body = await response.text()
+        } else {
+          const buf = Buffer.from(await response.arrayBuffer())
+          body = buf.toString('base64')
+          isBase64 = true
+        }
+      } catch {
+        try {
+          body = await response.text()
+        } catch {
+          const buf = Buffer.from(await response.arrayBuffer())
+          body = buf.toString('base64')
+          isBase64 = true
+        }
+      }
+
       const res = {
         pendingResponseId: data.pendingResponseId,
         domain: data.domain,
@@ -47,7 +72,9 @@ class ReqMessageService {
         status: response.status,
         statusText: response.statusText,
         headers: headers,
-        body: responseBody,
+        body,
+        contentType,
+        isBase64,
       }
 
       ws.send(

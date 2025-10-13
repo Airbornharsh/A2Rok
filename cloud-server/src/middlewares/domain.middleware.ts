@@ -116,43 +116,51 @@ class DomainMiddleware {
 
             if (response) {
               try {
-                if (response.body !== undefined) {
-                  if (typeof response.body === 'string') {
-                    res.status(response.status).send(response.body)
-                    console.log(
-                      `✅ Response sent successfully for pendingResponseId: ${pendingResponseId}`,
-                    )
-                    return
-                  } else {
-                    if (Array.isArray(response.body)) {
-                      res.status(response.status).json(response.body)
-                      console.log(
-                        `✅ Response sent successfully for pendingResponseId: ${pendingResponseId}`,
-                      )
-                      return
-                    } else if (typeof response.body === 'object') {
-                      res
-                        .status(response.status)
-                        .json({ ...response.body, A2Rok: true })
-                      console.log(
-                        `✅ Response sent successfully for pendingResponseId: ${pendingResponseId}`,
-                      )
-                      return
-                    } else {
-                      res.status(response.status).send(response.body)
-                      console.log(
-                        `✅ Response sent successfully for pendingResponseId: ${pendingResponseId}`,
-                      )
-                      return
+                const hopByHop = new Set([
+                  'connection',
+                  'keep-alive',
+                  'transfer-encoding',
+                  'upgrade',
+                  'proxy-authenticate',
+                  'proxy-authorization',
+                  'te',
+                  'trailer',
+                ])
+                if (response.headers) {
+                  for (const [k, v] of Object.entries(response.headers)) {
+                    const keyLower = k.toLowerCase()
+                    if (!hopByHop.has(keyLower)) {
+                      try {
+                        res.setHeader(k, v as any)
+                      } catch {}
                     }
                   }
-                } else {
+                }
+
+                if (response.contentType) {
+                  try {
+                    res.setHeader('Content-Type', response.contentType)
+                  } catch {}
+                }
+
+                if (response.body === undefined || response.body === null) {
                   res.status(response.status).end()
-                  console.log(
-                    `✅ Response sent successfully for pendingResponseId: ${pendingResponseId}`,
-                  )
                   return
                 }
+
+                if (response.isBase64) {
+                  const buf = Buffer.from(response.body as string, 'base64')
+                  res.status(response.status).send(buf)
+                  return
+                }
+
+                if (typeof response.body === 'string') {
+                  res.status(response.status).send(response.body)
+                  return
+                }
+
+                res.status(response.status).json(response.body)
+                return
               } catch (error) {
                 console.error(
                   `❌ Error sending response for pendingResponseId ${pendingResponseId}:`,
