@@ -1,11 +1,25 @@
 {
   "name": "a2rok",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "description": "This is helpful for tunneling localhost to internet",
+  "keywords": [
+    "tunnel",
+    "tunneling",
+    "localhost",
+    "http",
+    "cli",
+    "proxy",
+    "expose",
+    "developer-tools",
+    "a2rok"
+  ],
   "license": "ISC",
   "author": "Harsh Keshri",
   "type": "commonjs",
   "main": "dist/index.js",
+  "bin": {
+    "a2rok": "dist/index.js"
+  },
   "scripts": {
     "build": "tsc -b",
     "start": "node dist/index.js"
