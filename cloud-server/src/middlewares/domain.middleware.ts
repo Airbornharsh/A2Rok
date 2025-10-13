@@ -10,13 +10,60 @@ class DomainMiddleware {
     res: Response,
     next: NextFunction,
   ) {
-    const host = req.get('host') || req.get('x-forwarded-host') || ''
-    console.log('host', host)
-    if (!host.includes('.')) {
+    const forwardedHost =
+      req.get('x-forwarded-host') || req.get('x-original-host')
+    const rawHost = (forwardedHost || req.get('host') || '').trim()
+
+    const hostCandidate = rawHost.split(',')[0].trim()
+    if (!hostCandidate) {
       next()
       return
     }
-    const subdomain = host.split('.')[0]
+
+    const host = hostCandidate.replace(/:\d+$/, '')
+
+    const isIPv4 = /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)
+    const isIPv6 = host.includes(':') && host.split(':').length > 2
+    if (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      isIPv4 ||
+      isIPv6
+    ) {
+      next()
+      return
+    }
+
+    const BASE_DOMAINS = [
+      'a2rok-server.harshkeshri.com',
+      'a2rok.onrender.com',
+      'localhost',
+    ]
+
+    if (BASE_DOMAINS.includes(host)) {
+      next()
+      return
+    }
+
+    let subdomain: string | null = null
+    for (const base of BASE_DOMAINS) {
+      if (host.endsWith('.' + base)) {
+        const left = host.slice(0, host.length - (base.length + 1))
+        subdomain = left.split('.')[0]
+        break
+      }
+    }
+
+    if (!subdomain) {
+      next()
+      return
+    }
+
+    if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/.test(subdomain)) {
+      next()
+      return
+    }
 
     if (
       subdomain &&
@@ -29,7 +76,7 @@ class DomainMiddleware {
       if (!domain) {
         domain = await db?.DomainModel.findOne({ domain: subdomain }).lean()
         if (domain) {
-          Cache.set(cacheKey, domain, 60_000) // cache for 60s
+          Cache.set(cacheKey, domain, 60_000)
         }
       }
       if (!domain) {
