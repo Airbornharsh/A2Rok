@@ -5,13 +5,9 @@ import { setTerminalToken } from '@/utils/session'
 import { useAuth, useUser } from '@clerk/nextjs'
 import { Loader2 } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+function RootLayout({ children }: { children: React.ReactNode }) {
   const { isLoaded, user: clerkUser } = useUser()
   const { getToken } = useAuth()
   const searchParams = useSearchParams()
@@ -81,5 +77,23 @@ export default function RootLayout({
       {isLoadSidebar && <Sidebar />}
       <div className="flex-1">{children}</div>
     </div>
+  )
+}
+
+export default function SuspenseLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      }
+    >
+      <RootLayout>{children}</RootLayout>
+    </Suspense>
   )
 }
