@@ -156,6 +156,7 @@ export class WebSocketService {
       this.sendToUser(userId, domain, 'connection_established', {
         userId,
         user: connection.user,
+        domain: domain,
         timestamp: new Date().toISOString(),
       })
 

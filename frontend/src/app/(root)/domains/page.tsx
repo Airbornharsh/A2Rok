@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import React, { useEffect, useRef, useState } from 'react'
 import { Plus, Globe, Calendar, Copy, Check, RefreshCw } from 'lucide-react'
+import { fullDomain } from '@/utils/domain'
 
 const Page = () => {
   const { domains, domainsLoading, getDomains, createDomain } =
@@ -45,7 +46,8 @@ const Page = () => {
 
   const handleCopyDomain = async (domain: string) => {
     try {
-      await navigator.clipboard.writeText(domain)
+      const newDomain = fullDomain(domain)
+      await navigator.clipboard.writeText(newDomain)
       setCopiedDomain(domain)
       setTimeout(() => setCopiedDomain(null), 2000)
     } catch (err) {
@@ -157,7 +159,7 @@ const Page = () => {
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <CardTitle className="font-mono text-lg">
-                      {domain.domain}
+                      {fullDomain(domain.domain)}
                     </CardTitle>
                     <CardDescription className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">

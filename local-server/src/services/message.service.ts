@@ -3,6 +3,7 @@ import ReqMessageService from './reqMessage.service'
 let domainMetadata = {
   ttl: 0,
   opn: 0,
+  domain: '',
 }
 
 class MessageService {
@@ -12,6 +13,7 @@ class MessageService {
   ) {
     switch (message.type) {
       case 'connection_established':
+        domainMetadata.domain = message.data.domain
         break
       case 'subdomain_request':
         ReqMessageService.handleSubdomainRequest(message.data, ws)

@@ -1,7 +1,6 @@
 import { WSS_BACKEND_URL } from '../config/config'
 import CompressionService from '../services/compression.service'
 import MessageService from '../services/message.service'
-import Session from '../utils/session'
 
 // Global state for WebSocket connection
 let wsConnectionState = {
@@ -9,18 +8,13 @@ let wsConnectionState = {
   lastMessage: 'Waiting for connection...',
 }
 
-const connectWebSocket = async (port: number): Promise<WebSocket | null> => {
-  const session = await Session.getSession()
-  if (!session) {
-    console.error('Session not found')
-    return null
-  }
-
+const connectWebSocket = async (
+  port: number,
+  token: string,
+): Promise<WebSocket | null> => {
   wsConnectionState.lastMessage = 'Connecting to WebSocket server...'
 
-  const ws = new WebSocket(
-    `${WSS_BACKEND_URL}?token=${session.token}&port=${port}`,
-  )
+  const ws = new WebSocket(`${WSS_BACKEND_URL}?token=${token}&port=${port}`)
 
   // Ensure we receive binary frames for compressed messages
   ;(ws as any).binaryType = 'arraybuffer'
