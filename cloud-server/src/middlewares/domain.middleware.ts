@@ -11,6 +11,7 @@ class DomainMiddleware {
     next: NextFunction,
   ) {
     const host = req.get('host') || req.get('x-forwarded-host') || ''
+    console.log('host', host)
     if (!host.includes('.')) {
       next()
       return
