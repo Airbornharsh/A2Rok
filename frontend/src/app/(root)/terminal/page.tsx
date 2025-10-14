@@ -33,10 +33,10 @@ const Page = () => {
   }, [isLoaded, clerkUser, user, completeTerminalSession, router, linked])
 
   useEffect(() => {
-    if (linked) {
+    if (linked && user && clerkUser) {
       clearTerminalToken()
     }
-  }, [linked, completeTerminalSession])
+  }, [linked, completeTerminalSession, user, clerkUser])
 
   if (isTerminalSessionLoading) {
     return (

@@ -1,7 +1,7 @@
 'use client'
 import Sidebar from '@/components/Sidebar'
 import { useAuthStore } from '@/stores/authStore'
-import { setTerminalToken } from '@/utils/session'
+import { getTerminalToken, setTerminalToken } from '@/utils/session'
 import { useAuth, useUser } from '@clerk/nextjs'
 import { Loader2 } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -9,10 +9,11 @@ import { Suspense, useEffect, useMemo, useRef } from 'react'
 
 function RootLayout({ children }: { children: React.ReactNode }) {
   const { isLoaded, user: clerkUser } = useUser()
+  const { user } = useAuthStore()
   const { getToken } = useAuth()
   const searchParams = useSearchParams()
   const pathname = usePathname()
-  const token = searchParams.get('token')
+  const terminalToken = searchParams.get('token')
   const getUser = useAuthStore((state) => state.getUser)
   const setToken = useAuthStore((state) => state.setToken)
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated)
@@ -22,6 +23,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
   //   const callOnce = useRef(false)
   const router = useRouter()
   const callOnce = useRef(false)
+  const callOnce2 = useRef(false)
 
   useEffect(() => {
     const onLoad = async () => {
@@ -32,11 +34,6 @@ function RootLayout({ children }: { children: React.ReactNode }) {
           setToken(token)
           setIsAuthenticated(true)
           getUser()
-
-          const isLocalTerminalSession = checkLocalTerminalSession()
-          if (isLocalTerminalSession) {
-            router.push('/terminal?linked=true')
-          }
         } else {
           router.push('/auth')
         }
@@ -51,14 +48,19 @@ function RootLayout({ children }: { children: React.ReactNode }) {
     getToken,
     setToken,
     setIsAuthenticated,
-    checkLocalTerminalSession,
   ])
 
   useEffect(() => {
-    if (token) {
-      setTerminalToken(token)
+    if (terminalToken) {
+      setTerminalToken(terminalToken)
     }
-  }, [token])
+
+    const terminalTokenData = getTerminalToken()
+    if (clerkUser && user && terminalTokenData && !callOnce2.current) {
+      callOnce2.current = true
+      router.push('/terminal?linked=true')
+    }
+  }, [terminalToken, checkLocalTerminalSession, router, clerkUser, user])
 
   const isLoadSidebar = useMemo(() => {
     return pathname !== '/auth' && pathname !== '/terminal'

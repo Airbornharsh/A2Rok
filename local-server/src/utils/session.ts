@@ -18,11 +18,15 @@ class Session {
     email: string
     token: string
   }): Promise<void> {
-    fs.writeFileSync(sessionPath, JSON.stringify(session))
+    try {
+      fs.writeFileSync(sessionPath, JSON.stringify(session))
+    } catch {}
   }
 
   static async deleteSession(): Promise<void> {
-    fs.unlinkSync(sessionPath)
+    try {
+      fs.unlinkSync(sessionPath)
+    } catch {}
   }
 }
 

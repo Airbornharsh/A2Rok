@@ -137,6 +137,11 @@ class AuthController {
         res.status(404).json({
           success: false,
           message: 'Session not found',
+          data: {
+            valid: 'inactive',
+            email: '',
+            token: '',
+          },
         })
         return
       }
@@ -145,6 +150,11 @@ class AuthController {
         res.status(404).json({
           success: false,
           message: 'User not found',
+          data: {
+            valid: 'inactive',
+            email: '',
+            token: '',
+          },
         })
         return
       }
@@ -162,7 +172,7 @@ class AuthController {
         success: true,
         message: 'Session checked successfully',
         data: {
-          valid: session.userId ? session.status : false,
+          valid: session.userId ? session.status : 'inactive',
           email: (session.userId as IUser).email,
           token,
         },
@@ -172,6 +182,11 @@ class AuthController {
       res.status(500).json({
         success: false,
         message: 'Internal server error',
+        data: {
+          valid: 'inactive',
+          email: '',
+          token: '',
+        },
       })
     }
   }
