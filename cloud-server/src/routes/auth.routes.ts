@@ -14,4 +14,6 @@ router.post(
 )
 router.get('/session/:sessionId', AuthController.checkTerminalSession)
 
+router.post('/limit', Middleware.authMiddleware, AuthController.updateLimit)
+
 export default router

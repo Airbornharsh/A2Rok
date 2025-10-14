@@ -122,6 +122,39 @@ class DomainMiddleware {
       req.subdomain = subdomain
       req.domainInfo = domain as any
 
+      // Enforce per-user request limits (bypass for specific admin email)
+      try {
+        const owner = await db?.UserModel.findById(domain.userId).lean()
+        const isUnlimited = owner?.email === 'harshkeshriwork@gmail.com'
+
+        if (!isUnlimited) {
+          const updatedUser = await db?.UserModel.findOneAndUpdate(
+            {
+              _id: domain.userId,
+              $expr: { $lt: ['$limit.used', '$limit.total'] },
+            },
+            { $inc: { 'limit.used': 1 } },
+            { new: true },
+          ).lean()
+
+          if (!updatedUser) {
+            res.status(429).json({
+              success: false,
+              message:
+                'Request limit exceeded. Please upgrade your plan or try later.',
+            })
+            return
+          }
+        }
+      } catch (err) {
+        console.error('Error enforcing user limit:', err)
+        res.status(500).json({
+          success: false,
+          message: 'Internal error while enforcing usage limits',
+        })
+        return
+      }
+
       const pendingResponseId = uuidv4() + ':' + uuidv4()
 
       try {

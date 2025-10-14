@@ -7,6 +7,10 @@ export interface IUser extends mongoose.Document {
   provider: 'google' | 'email'
   imageUrl?: string
   admin?: boolean
+  limit?: {
+    total: number
+    used: number
+  }
   createdAt?: Date
   updatedAt?: Date
 }
@@ -35,6 +39,26 @@ const UserSchema = new mongoose.Schema<IUser>(
     imageUrl: {
       type: String,
       required: false,
+    },
+    admin: {
+      type: Boolean,
+      required: false,
+    },
+    limit: {
+      type: {
+        total: {
+          type: Number,
+          required: false,
+        },
+        used: {
+          type: Number,
+          required: false,
+        },
+      },
+      default: {
+        total: 10000,
+        used: 0,
+      },
     },
   },
   {
