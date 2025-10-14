@@ -88,38 +88,60 @@ export class WebSocketService {
 
       const userId = (user as any)._id.toString()
 
-      let domainData
-      let domain = url.searchParams.get('domain')
+      const requestedDomain = url.searchParams.get('domain') || undefined
 
-      if (domain) {
-        domainData = await db?.DomainModel.findOne({ domain, userId }).lean()
+      const userDomains = (await db?.DomainModel.find({ userId })
+        .lean()
+        .exec()) as Array<{ domain: string }> | undefined
+
+      let domain: string | null = null
+
+      if (requestedDomain) {
+        const owned = userDomains?.some((d) => d.domain === requestedDomain)
+        if (!owned) {
+          ws.close(1008, 'Requested domain not found for this user')
+          return
+        }
+        if (this.domainConnections.has(requestedDomain)) {
+          const alternative = userDomains?.find(
+            (d) => !this.domainConnections.has(d.domain),
+          )
+          if (alternative) {
+            domain = alternative.domain
+          } else {
+            ws.close(1008, 'Requested domain is already connected')
+            return
+          }
+        } else {
+          domain = requestedDomain
+        }
       } else {
-        domainData = await db?.DomainModel.findOne({ userId }).lean()
-        if (!domainData) {
-          domainData = await DomainService.createDomain(userId)
-          if (!domainData) {
+        if (userDomains && userDomains.length > 0) {
+          const available = userDomains.find(
+            (d) => !this.domainConnections.has(d.domain),
+          )
+          if (available) {
+            domain = available.domain
+          } else {
+            ws.close(1008, 'All domains for this user are already connected')
+            return
+          }
+        } else {
+          const created = await DomainService.createDomain(userId)
+          if (!created) {
             ws.close(1008, 'Failed to create domain')
             return
           }
+          domain = created.domain
         }
-        domain = domainData.domain
       }
 
       if (!domain) {
-        ws.close(1008, 'Failed to get domain')
+        ws.close(1008, 'Failed to resolve domain')
         return
       }
 
       console.log(`\n🔐 Authenticated user: ${user.email} (${domain})`)
-
-      // Check if user already has a connection
-      const existingConnection = this.domainConnections.get(domain)
-      if (existingConnection) {
-        console.log(`🔄 Replacing existing connection for user: ${userId}`)
-        if (existingConnection.ws.readyState === WebSocket.OPEN) {
-          existingConnection.ws.close(1000, 'New connection established')
-        }
-      }
 
       const connection: UserConnection = {
         userId,
@@ -135,7 +157,7 @@ export class WebSocketService {
         },
       }
 
-      // Store connection by domain and update user domains
+      // Store connection by domain and update user domains (do not replace existing)
       this.domainConnections.set(domain, connection)
 
       // Update user domains mapping
