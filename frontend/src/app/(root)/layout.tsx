@@ -1,5 +1,6 @@
 'use client'
 import Sidebar from '@/components/Sidebar'
+import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/authStore'
 import { getTerminalToken, setTerminalToken } from '@/utils/session'
 import { useAuth, useUser } from '@clerk/nextjs'
@@ -27,7 +28,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const onLoad = async () => {
-      if (isLoaded && !callOnce.current) {
+      if (isLoaded && pathname && !callOnce.current) {
         callOnce.current = true
         if (clerkUser) {
           const token = await getToken()
@@ -35,7 +36,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
           setIsAuthenticated(true)
           getUser()
         } else {
-          router.push('/auth')
+          if (pathname !== '/help') router.push('/auth')
         }
       }
     }
@@ -43,6 +44,7 @@ function RootLayout({ children }: { children: React.ReactNode }) {
   }, [
     isLoaded,
     clerkUser,
+    pathname,
     getUser,
     router,
     getToken,
@@ -77,7 +79,25 @@ function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen">
       {isLoadSidebar && <Sidebar />}
-      <div className="flex-1">{children}</div>
+      <div className="flex flex-1 flex-col">
+        {/* Top navbar */}
+        <div className="flex h-12 items-center justify-between border-b border-zinc-800 px-4 text-sm">
+          <div className="font-semibold">A2Rok</div>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => router.push('/help')}>
+              Guide
+            </Button>
+            <div className="text-zinc-400">
+              {clerkUser?.emailAddresses?.[0]?.emailAddress ||
+                user?.email ||
+                ''}
+            </div>
+          </div>
+        </div>
+        <div className="h-[calc(100vh-48px)] flex-1 overflow-auto">
+          {children}
+        </div>
+      </div>
     </div>
   )
 }

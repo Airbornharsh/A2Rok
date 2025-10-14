@@ -1,33 +1,29 @@
 'use client'
 
-export default function Home() {
+export default function HelpPage() {
   return (
     <div className="h-full overflow-auto p-6">
       <div className="mx-auto w-full max-w-3xl space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">A2Rok CLI</h1>
+          <h1 className="text-2xl font-bold">Help & Getting Started</h1>
           <p className="mt-1 text-sm text-zinc-400">
-            Tunneling helper to expose your local HTTP server to the internet.
+            Quick guide to install and use A2Rok CLI.
           </p>
         </div>
 
         <section>
           <h2 className="mb-2 text-lg font-semibold">Installation</h2>
           <div className="rounded-md border border-zinc-800 bg-zinc-950 p-4">
-            <pre className="whitespace-pre-wrap text-sm text-zinc-200">
-              {`npm install -g a2rok
+            <pre className="whitespace-pre-wrap text-sm text-zinc-200">{`npm install -g a2rok
 
-a2rok --help`}
-            </pre>
+a2rok --help`}</pre>
           </div>
         </section>
 
         <section>
           <h2 className="mb-2 text-lg font-semibold">Usage</h2>
           <div className="rounded-md border border-zinc-800 bg-zinc-950 p-4">
-            <pre className="whitespace-pre-wrap text-sm text-zinc-200">
-              {`a2rok <command> [options]`}
-            </pre>
+            <pre className="whitespace-pre-wrap text-sm text-zinc-200">{`a2rok <command> [options]`}</pre>
           </div>
         </section>
 
@@ -65,11 +61,9 @@ a2rok --help`}
         <section>
           <h2 className="mb-2 text-lg font-semibold">Examples</h2>
           <div className="rounded-md border border-zinc-800 bg-zinc-950 p-4">
-            <pre className="whitespace-pre-wrap text-sm text-zinc-200">
-              {`a2rok login
+            <pre className="whitespace-pre-wrap text-sm text-zinc-200">{`a2rok login
 a2rok user
-a2rok http 3000`}
-            </pre>
+a2rok http 3000`}</pre>
           </div>
         </section>
       </div>

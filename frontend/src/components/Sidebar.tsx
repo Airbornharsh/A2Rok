@@ -49,6 +49,25 @@ const Sidebar = () => {
         {routes.map((route) => {
           const Icon = route.icon
           const active = pathname === route.href
+          if (pathname === '/help')
+            return (
+              <div
+                key={route.name}
+                className={cn(
+                  'mx-2 flex cursor-pointer items-center gap-3 rounded-lg px-4 py-2 transition-colors',
+                  active
+                    ? 'bg-gray-800 text-white'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white',
+                )}
+                onClick={() => (window.location.href = route.href)}
+              >
+                <Icon size={20} />
+                {!collapsed && (
+                  <span className="text-sm font-medium">{route.name}</span>
+                )}
+              </div>
+            )
+
           return (
             <Link key={route.name} href={route.href}>
               <div

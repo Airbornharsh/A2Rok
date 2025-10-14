@@ -46,7 +46,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
+    <div className="bg-background flex min-h-full items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Card className="bg-0 border-0">
           <CardHeader className="text-center">
@@ -70,7 +70,7 @@ export default function AuthPage() {
               </TabsList>
 
               <TabsContent value="demo" className="mt-6">
-                <div className="flex justify-center space-y-4">
+                <div className="flex flex-col items-center gap-3">
                   <Button onClick={handleDemoSignIn} disabled={isLoading}>
                     {isLoading ? 'Loading...' : 'Demo Sign In'}
                   </Button>
