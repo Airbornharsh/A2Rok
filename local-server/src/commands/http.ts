@@ -1,5 +1,6 @@
-import connectWebSocket, { wsConnectionState } from '../apis/websocket'
+import connectWebSocket from '../apis/websocket'
 import MessageService from '../services/message.service'
+import ReqMessageService from '../services/reqMessage.service'
 import Session from '../utils/session'
 
 const httpCommand = async (args: string[]) => {
@@ -19,8 +20,6 @@ const httpCommand = async (args: string[]) => {
     return null
   }
   await connectWebSocket(port, session.token)
-
-  const domain = 'shkfc-sfvujsbfnvol'
 
   process.stdout.write('\x1Bc')
   process.stdout.write('\x1b[0;0H')
@@ -70,9 +69,68 @@ const httpCommand = async (args: string[]) => {
     console.log('\x1b[90m└─────┴─────┘\x1b[0m')
     console.log('')
 
+    const recent = ReqMessageService.getRecentRequests()
+    console.log('\x1b[1m\x1b[33mRecent Requests:\x1b[0m')
+
+    const termWidth = Math.max(40, process.stdout.columns || 80)
+    const mthWidth = 5
+    const stsWidth = 3
+    const fixedOverhead = 2 /*│ */ + 3 /* │ */ + 3 /* │ */ + 2 /* │*/
+    let routeWidth = termWidth - fixedOverhead - mthWidth - stsWidth
+    if (routeWidth < 10) routeWidth = 10
+
+    const grey = '\x1b[90m'
+    const reset = '\x1b[0m'
+
+    const top = `${grey}┌${'─'.repeat(mthWidth + 2)}┬${'─'.repeat(routeWidth + 2)}┬${'─'.repeat(stsWidth + 2)}┐${reset}`
+    const sep = `${grey}├${'─'.repeat(mthWidth + 2)}┼${'─'.repeat(routeWidth + 2)}┼${'─'.repeat(stsWidth + 2)}┤${reset}`
+    const bot = `${grey}└${'─'.repeat(mthWidth + 2)}┴${'─'.repeat(routeWidth + 2)}┴${'─'.repeat(stsWidth + 2)}┘${reset}`
+
+    console.log(top)
+    const header = `${grey}│${reset} \x1b[1mMTH\x1b[0m${' '.repeat(mthWidth - 3)} ${grey}│${reset} \x1b[1mROUTE\x1b[0m${' '.repeat(Math.max(0, routeWidth - 5))} ${grey}│${reset} \x1b[1mSTS\x1b[0m ${grey}│${reset}`
+    console.log(header)
+    console.log(sep)
+
+    if (recent.length === 0) {
+      const emptyMsg = '(no requests yet)'
+      const routeCell = (
+        emptyMsg + ' '.repeat(Math.max(0, routeWidth - emptyMsg.length))
+      ).slice(0, routeWidth)
+      console.log(
+        `${grey}│${reset} ${' '.repeat(mthWidth)} ${grey}│${reset} ${routeCell} ${grey}│${reset} ${' '.repeat(stsWidth)} ${grey}│${reset}`,
+      )
+    } else {
+      for (const r of recent) {
+        const method = (r.method || '')
+          .toString()
+          .padEnd(mthWidth)
+          .slice(0, mthWidth)
+        const route = (r.route || '/')
+          .toString()
+          .padEnd(routeWidth)
+          .slice(0, routeWidth)
+        const pending = r.status === undefined
+        const statusText = pending
+          ? '⏳'
+          : (r.status ?? '-').toString().padStart(stsWidth)
+        const statusColor = pending
+          ? '\x1b[33m'
+          : r.status && r.status >= 200 && r.status < 300
+            ? '\x1b[32m'
+            : r.status && r.status >= 400
+              ? '\x1b[31m'
+              : '\x1b[37m'
+        console.log(
+          `${grey}│${reset} ${method} ${grey}│${reset} ${route} ${grey}│${reset} ${statusColor}${statusText}${reset} ${grey}│${reset}`,
+        )
+      }
+    }
+    console.log(bot)
+    console.log('')
+
     // Footer
     console.log('\x1b[90mPress \x1b[1mCtrl + C\x1b[0m \x1b[90mto exit.\x1b[0m')
-  }, 1000)
+  }, 100)
 
   process.on('SIGINT', () => {
     process.stdout.write('\x1Bc')

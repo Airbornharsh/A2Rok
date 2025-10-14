@@ -50,7 +50,7 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         <Card className="bg-0 border-0">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome</CardTitle>
+            <CardTitle className="text-2xl">Welcome To A2Rok</CardTitle>
             <CardDescription>
               Choose your preferred authentication method
             </CardDescription>

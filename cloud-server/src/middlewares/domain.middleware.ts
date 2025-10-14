@@ -5,6 +5,39 @@ import { v4 as uuidv4 } from 'uuid'
 import Cache from '../services/cache.service'
 
 class DomainMiddleware {
+  // Middleware to capture raw body before Express processing
+  static async captureRawBody(req: Request, res: Response, next: NextFunction) {
+    if (
+      req.method === 'GET' ||
+      req.method === 'HEAD' ||
+      req.method === 'OPTIONS'
+    ) {
+      return next()
+    }
+
+    try {
+      const chunks: Buffer[] = []
+
+      req.on('data', (chunk: Buffer) => {
+        chunks.push(chunk)
+      })
+
+      req.on('end', () => {
+        const rawBody = Buffer.concat(chunks)
+        ;(req as any).rawBody = rawBody.toString('base64')
+        next()
+      })
+
+      req.on('error', (error) => {
+        console.error('Error capturing raw body:', error)
+        next(error)
+      })
+    } catch (error) {
+      console.error('Error in captureRawBody middleware:', error)
+      next(error)
+    }
+  }
+
   static async domainMiddleware(
     req: Request,
     res: Response,
@@ -92,14 +125,49 @@ class DomainMiddleware {
       const pendingResponseId = uuidv4() + ':' + uuidv4()
 
       try {
+        const rawBody = (req as any).rawBody || ''
+
+        const preservedHeaders: Record<string, string> = {}
+        if (req.rawHeaders) {
+          for (let i = 0; i < req.rawHeaders.length; i += 2) {
+            const headerName = req.rawHeaders[i]
+            const headerValue = req.rawHeaders[i + 1]
+            if (headerName && headerValue) {
+              preservedHeaders[headerName] = headerValue
+            }
+          }
+        }
+
+        const fullUrl = req.originalUrl || req.url
+        const queryString = req.url.includes('?')
+          ? req.url.substring(req.url.indexOf('?'))
+          : ''
+        const reconstructedPath = req.path + queryString
+
+        const enhancedRequest = {
+          ...req,
+          rawBody: rawBody,
+          preservedHeaders,
+          fullUrl,
+          reconstructedPath,
+          originalHost: req.get('host'),
+          originalProtocol: req.protocol,
+          originalSecure: req.secure,
+          timestamp: new Date().toISOString(),
+        }
+
         WebSocketService.getInstance().passRequest(
           domain.userId.toString(),
           subdomain,
           pendingResponseId,
-          req,
+          enhancedRequest,
         )
 
-        while (true) {
+        // Add 1-minute timeout
+        const timeoutMs = 60000 // 1 minute
+        const startTime = Date.now()
+
+        while (Date.now() - startTime < timeoutMs) {
           if (
             WebSocketService.getInstance().hasStoredResponse(pendingResponseId)
           ) {
@@ -111,32 +179,10 @@ class DomainMiddleware {
             WebSocketService.getInstance().deleteStoredResponse(
               pendingResponseId,
             )
-
             WebSocketService.getInstance().decreaseDomainOpn(subdomain)
 
             if (response) {
               try {
-                const hopByHop = new Set([
-                  'connection',
-                  'keep-alive',
-                  'transfer-encoding',
-                  'upgrade',
-                  'proxy-authenticate',
-                  'proxy-authorization',
-                  'te',
-                  'trailer',
-                ])
-                if (response.headers) {
-                  for (const [k, v] of Object.entries(response.headers)) {
-                    const keyLower = k.toLowerCase()
-                    if (!hopByHop.has(keyLower)) {
-                      try {
-                        res.setHeader(k, v as any)
-                      } catch {}
-                    }
-                  }
-                }
-
                 if (response.contentType) {
                   try {
                     res.setHeader('Content-Type', response.contentType)
@@ -177,6 +223,18 @@ class DomainMiddleware {
 
           await new Promise((resolve) => setTimeout(resolve, 100))
         }
+
+        // Timeout reached
+        WebSocketService.getInstance().deleteStoredResponse(pendingResponseId)
+        WebSocketService.getInstance().decreaseDomainOpn(subdomain)
+
+        res.status(504).json({
+          success: false,
+          message: 'Request timeout - no response from local server',
+          timeout: timeoutMs,
+          pendingResponseId: pendingResponseId,
+        })
+        return
       } catch (error) {
         console.error('Error passing request to WebSocket:', error)
         res.status(503).json({

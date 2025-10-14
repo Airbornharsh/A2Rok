@@ -56,6 +56,9 @@ if (cluster.isPrimary) {
     next()
   })
 
+  // Add raw body capture middleware BEFORE Express body parsing
+  app.use(DomainMiddleware.captureRawBody)
+
   app.use(express.json({ limit: '50mb' }))
   app.use(express.urlencoded({ limit: '50mb', extended: true }))
   app.use(cors(corsOptions))

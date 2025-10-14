@@ -13,6 +13,12 @@ export interface SubdomainRequest {
   secure: boolean
   hostname: string
   ip: string
+  rawBody?: string
+  reconstructedPath?: string
+  originalHost?: string
+  originalProtocol?: string
+  originalSecure?: boolean
+  timestamp?: string
 }
 
 export interface SubdomainResponse {
@@ -23,7 +29,6 @@ export interface SubdomainResponse {
   statusText: string
   headers: Record<string, string>
   body: any
-  // Optional encoding info for non-text bodies
   contentType?: string
   isBase64?: boolean
 }

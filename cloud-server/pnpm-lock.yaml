@@ -31,6 +31,9 @@ importers:
       mongoose:
         specifier: ^8.19.1
         version: 8.19.1
+      raw-body:
+        specifier: ^2.5.2
+        version: 2.5.2
       svix:
         specifier: ^1.76.1
         version: 1.77.0
@@ -50,6 +53,9 @@ importers:
       '@types/jsonwebtoken':
         specifier: ^9.0.10
         version: 9.0.10
+      '@types/raw-body':
+        specifier: ^2.3.0
+        version: 2.3.0
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
@@ -179,6 +185,13 @@ packages:
       {
         integrity: sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==,
       }
+
+  '@types/raw-body@2.3.0':
+    resolution:
+      {
+        integrity: sha512-O6RrhgBmUATx9NfxOarftVIG6Vw64T3JNF26iIR5XVl037Hh5M4gqUQtYtBmEkWJdzEZXd0TevSvSneuh9Snmw==,
+      }
+    deprecated: This is a stub types definition for raw-body (https://github.com/stream-utils/raw-body). raw-body provides its own type definitions, so you don't need @types/raw-body installed!
 
   '@types/send@0.17.5':
     resolution:
@@ -552,6 +565,13 @@ packages:
       }
     engines: { node: '>= 0.8' }
 
+  iconv-lite@0.4.24:
+    resolution:
+      {
+        integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==,
+      }
+    engines: { node: '>=0.10.0' }
+
   iconv-lite@0.6.3:
     resolution:
       {
@@ -858,6 +878,13 @@ packages:
         integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==,
       }
     engines: { node: '>= 0.6' }
+
+  raw-body@2.5.2:
+    resolution:
+      {
+        integrity: sha512-8zGqypfENjCIqGhgXToC8aB2r7YrBX+AQAfIPs/Mlk+BtPTztOvTS01NRW/3Eh60J+a48lt8qsCzirQ6loCVfA==,
+      }
+    engines: { node: '>= 0.8' }
 
   raw-body@3.0.1:
     resolution:
@@ -1201,6 +1228,10 @@ snapshots:
 
   '@types/range-parser@1.2.7': {}
 
+  '@types/raw-body@2.3.0':
+    dependencies:
+      raw-body: 2.5.2
+
   '@types/send@0.17.5':
     dependencies:
       '@types/mime': 1.3.5
@@ -1440,6 +1471,10 @@ snapshots:
       statuses: 2.0.1
       toidentifier: 1.0.1
 
+  iconv-lite@0.4.24:
+    dependencies:
+      safer-buffer: 2.1.2
+
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
@@ -1588,6 +1623,13 @@ snapshots:
       side-channel: 1.1.0
 
   range-parser@1.2.1: {}
+
+  raw-body@2.5.2:
+    dependencies:
+      bytes: 3.1.2
+      http-errors: 2.0.0
+      iconv-lite: 0.4.24
+      unpipe: 1.0.0
 
   raw-body@3.0.1:
     dependencies:

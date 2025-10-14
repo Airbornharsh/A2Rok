@@ -1,28 +1,122 @@
 import { SubdomainRequest, SubdomainResponse } from '../types/instance'
 import CompressionService from './compression.service'
+import crypto from 'crypto'
+
+const apiHistory: {
+  [key: string]: {
+    route: string
+    method: string
+    status?: number
+  }
+} = {}
+
+const recentRequests: Array<{
+  id: string
+  method: string
+  route: string
+  status?: number
+}> = []
 
 class ReqMessageService {
+  static getRecentRequests() {
+    return [...recentRequests]
+  }
   static async handleSubdomainRequest(
     data: SubdomainRequest,
     ws: WebSocket,
   ): Promise<SubdomainResponse> {
-    // Handle body serialization based on content type
-    let body: string | undefined
-    if (data.body && data.method !== 'GET' && data.method !== 'HEAD') {
-      if (typeof data.body === 'string') {
-        body = data.body
-      } else if (typeof data.body === 'object') {
-        body = JSON.stringify(data.body)
+    // Use enhanced request data if available
+    const useEnhancedData =
+      data.rawBody !== undefined && data.reconstructedPath !== undefined
+
+    // Determine the target URL
+    const targetPath = useEnhancedData ? data.reconstructedPath : data.path
+    const targetUrl = `http://localhost:${data.port}${targetPath}`
+
+    const incomingHeaders = data.headers || {}
+    const hopByHopHeaders = new Set([
+      'connection',
+      'keep-alive',
+      'transfer-encoding',
+      'upgrade',
+      'proxy-authenticate',
+      'proxy-authorization',
+      'te',
+      'trailer',
+      'content-length',
+    ])
+    const headers: Record<string, string> = {}
+    for (const [key, value] of Object.entries(incomingHeaders)) {
+      const lowerKey = key.toLowerCase()
+      if (hopByHopHeaders.has(lowerKey)) continue
+      if (typeof value === 'undefined' || value === null) continue
+      headers[lowerKey] = String(value)
+    }
+
+    const originHeader = headers['origin']
+    if (originHeader) {
+      try {
+        const url = new URL(originHeader)
+        headers['x-forwarded-host'] = url.host
+        headers['x-forwarded-proto'] = url.protocol.replace(':', '')
+        if (url.port) {
+          headers['x-forwarded-port'] = url.port
+        }
+      } catch {}
+    } else if (data.originalHost) {
+      headers['x-forwarded-host'] = data.originalHost
+    }
+
+    delete (headers as any)['host']
+
+    // Content-Type aware body andling
+    const contentType = headers['content-type'] || headers['Content-Type'] || ''
+    let body: string | Buffer | undefined
+
+    if (data.method !== 'GET' && data.method !== 'HEAD') {
+      if (useEnhancedData && data.rawBody) {
+        // Use raw body for binary data and form uploads
+        if (
+          contentType.includes('multipart/form-data') ||
+          contentType.includes('application/octet-stream') ||
+          contentType.includes('image/') ||
+          contentType.includes('video/') ||
+          contentType.includes('audio/')
+        ) {
+          body = Buffer.from(data.rawBody, 'base64')
+        } else {
+          // For text-based content, use raw body as string
+          body = Buffer.from(data.rawBody, 'base64').toString('utf8')
+        }
+      } else if (data.body) {
+        // Fallback to parsed body with proper serialization
+        if (contentType.includes('application/json')) {
+          body =
+            typeof data.body === 'string'
+              ? data.body
+              : JSON.stringify(data.body)
+        } else if (contentType.includes('application/x-www-form-urlencoded')) {
+          body =
+            typeof data.body === 'string'
+              ? data.body
+              : new URLSearchParams(data.body).toString()
+        } else {
+          body =
+            typeof data.body === 'string'
+              ? data.body
+              : JSON.stringify(data.body)
+        }
       }
     }
 
-    const { connection, ...headers } = data.headers
+    // Preserve original host header if available, otherwise use localhost
+    const hostHeader = data.originalHost || `localhost:${data.port}`
 
     const fetchOptions: RequestInit = {
       method: data.method,
       headers: {
         ...headers,
-        host: 'localhost' + ':' + data.port,
+        host: hostHeader,
       },
     }
 
@@ -30,11 +124,22 @@ class ReqMessageService {
       fetchOptions.body = body
     }
 
+    const uuid = crypto.randomUUID() + ':' + crypto.randomUUID()
+    apiHistory[uuid] = {
+      route: targetPath || '/',
+      method: data.method,
+    }
+
+    // Add a pending entry to recent requests at start
+    recentRequests.unshift({
+      id: uuid,
+      method: data.method,
+      route: targetPath || '/',
+    })
+    if (recentRequests.length > 10) recentRequests.pop()
+
     try {
-      const response = await fetch(
-        `http://localhost:${data.port}${data.path}`,
-        fetchOptions,
-      )
+      const response = await fetch(targetUrl, fetchOptions)
       const headers = Object.fromEntries(response.headers.entries())
 
       const contentType =
@@ -84,6 +189,27 @@ class ReqMessageService {
         }),
       )
 
+      apiHistory[uuid].status = response.status
+
+      const idx = recentRequests.findIndex((r) => r.id === uuid)
+      if (idx !== -1) {
+        const existing = recentRequests[idx]!
+        recentRequests[idx] = {
+          id: existing.id,
+          method: existing.method,
+          route: existing.route,
+          status: response.status,
+        }
+      } else {
+        recentRequests.unshift({
+          id: uuid,
+          method: data.method,
+          route: targetPath || '/',
+          status: response.status,
+        })
+        if (recentRequests.length > 10) recentRequests.pop()
+      }
+
       return res
     } catch (error) {
       console.error('Request failed:', error)
@@ -96,7 +222,6 @@ class ReqMessageService {
         statusText: 'Internal Server Error',
         headers: {},
         body: {
-          error: 'Request failed',
           message: error instanceof Error ? error.message : 'Unknown error',
           type: error instanceof Error ? error.constructor.name : 'Error',
         },
@@ -108,6 +233,27 @@ class ReqMessageService {
           data: errorResponse,
         }),
       )
+
+      apiHistory[uuid].status = 500
+
+      const idx = recentRequests.findIndex((r) => r.id === uuid)
+      if (idx !== -1) {
+        const existing = recentRequests[idx]!
+        recentRequests[idx] = {
+          id: existing.id,
+          method: existing.method,
+          route: existing.route,
+          status: 500,
+        }
+      } else {
+        recentRequests.unshift({
+          id: uuid,
+          method: data.method,
+          route: targetPath || '/',
+          status: 500,
+        })
+        if (recentRequests.length > 10) recentRequests.pop()
+      }
 
       return errorResponse
     }
