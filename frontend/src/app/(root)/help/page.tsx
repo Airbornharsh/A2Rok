@@ -7,7 +7,8 @@ export default function HelpPage() {
         <div>
           <h1 className="text-2xl font-bold">Help & Getting Started</h1>
           <p className="mt-1 text-sm text-zinc-400">
-            Quick guide to install and use A2Rok CLI for HTTP/HTTPS tunneling.
+            Quick guide to install and use A2Rok CLI for HTTP/HTTPS and
+            WebSocket tunneling.
           </p>
         </div>
 
@@ -50,6 +51,16 @@ a2rok --help`}</pre>
               an HTTPS server using{' '}
               <code className="text-zinc-200">&lt;link&gt;</code>
             </li>
+            <li>
+              <code className="text-zinc-200">ws &lt;link&gt;</code>: Expose a
+              WebSocket server using{' '}
+              <code className="text-zinc-200">&lt;link&gt;</code>
+            </li>
+            <li>
+              <code className="text-zinc-200">wss &lt;link&gt;</code>: Expose a
+              secure WebSocket server using{' '}
+              <code className="text-zinc-200">&lt;link&gt;</code>
+            </li>
           </ul>
         </section>
 
@@ -69,7 +80,9 @@ a2rok --help`}</pre>
             <pre className="whitespace-pre-wrap text-sm text-zinc-200">{`a2rok login
 a2rok user
 a2rok http 3000
-a2rok https https://my-domain.com`}</pre>
+a2rok https https://my-domain.com
+a2rok ws ws://localhost:8080
+a2rok wss wss://your-domain.com/ws`}</pre>
           </div>
         </section>
       </div>
