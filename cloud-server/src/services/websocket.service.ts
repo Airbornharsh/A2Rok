@@ -602,10 +602,6 @@ export class WebSocketService {
       return
     }
     const queries = request.url.split('?')[1]
-    if (!queries) {
-      ws.close(1008, 'Missing queries')
-      return
-    }
 
     if (!this.domainConnections.has(subdomain)) {
       ws.close(1008, 'Domain not connected')
@@ -671,7 +667,7 @@ export class WebSocketService {
       'pending_incoming_ws_connection',
       {
         domain: subdomain,
-        url: existingConnection.link + '?' + queries,
+        url: existingConnection.link + (queries ? '?' + queries : ''),
         // headers: request.headers,
         timestamp: new Date().toISOString(),
       },
