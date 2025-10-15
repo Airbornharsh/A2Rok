@@ -23,3 +23,5 @@ env/
 uploads/
 
 package-test/
+
+websocket-test/

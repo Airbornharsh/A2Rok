@@ -1,6 +1,6 @@
 {
   "name": "a2rok",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "This is helpful for tunneling localhost to internet",
   "keywords": [
     "tunnel",
@@ -26,10 +26,12 @@
   },
   "devDependencies": {
     "@types/node": "^24.7.1",
+    "@types/ws": "^8.18.1",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "inquirer": "^12.9.6",
-    "open": "^10.2.0"
+    "open": "^10.2.0",
+    "ws": "^8.18.3"
   }
 }

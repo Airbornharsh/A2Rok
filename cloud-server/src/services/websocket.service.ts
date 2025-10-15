@@ -1,10 +1,11 @@
 import { WebSocketServer, WebSocket } from 'ws'
-import { Server } from 'http'
+import { IncomingMessage, Server } from 'http'
 import { db } from '../db/mongo/init'
 import DomainService from './domain.service'
 import JwtService from './jwt.service'
 import { SubdomainResponse } from '../types/instance'
 import CompressionService from './compression.service'
+import Cache from './cache.service'
 
 interface UserConnection {
   userId: string
@@ -36,9 +37,15 @@ export class WebSocketService {
       opn: number
     }
   > = new Map()
+
   // pendingResponseId -> data: null | responseData
-  private pendingResponseStorage: Map<string, SubdomainResponse | null> =
+  private pendingHttpResponseStorage: Map<string, SubdomainResponse | null> =
     new Map()
+
+  // domain -> boolean
+  private pendingDomainWsTunnel: Map<string, boolean> = new Map()
+  // domain -> ws
+  private domainWsTunnelConnection: Map<string, WebSocket> = new Map()
   private server: Server | null = null
 
   private constructor() {}
@@ -64,9 +71,80 @@ export class WebSocketService {
     console.log(`🔌 WebSocket server initialized on path: ${path}`)
   }
 
+  private handleConnection(ws: WebSocket, request: IncomingMessage): void {
+    const forwardedHost =
+      request.headers['x-forwarded-host'] || request.headers['x-original-host']
+    const rawHost = (forwardedHost || request.headers['host'] || '')
+      .toString()
+      .trim()
+
+    const hostCandidate = rawHost.split(',')[0].trim()
+    if (!hostCandidate) {
+      this.handleServerConnection(ws, request)
+      return
+    }
+
+    const host = hostCandidate.replace(/:\d+$/, '')
+
+    const isIPv4 = /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)
+    const isIPv6 = host.includes(':') && host.split(':').length > 2
+    if (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      isIPv4 ||
+      isIPv6
+    ) {
+      this.handleServerConnection(ws, request)
+      return
+    }
+
+    const BASE_DOMAINS = [
+      'a2rok-server.harshkeshri.com',
+      'a2rok.onrender.com',
+      'localhost',
+    ]
+
+    if (BASE_DOMAINS.includes(host)) {
+      this.handleServerConnection(ws, request)
+      return
+    }
+
+    let subdomain: string | null = null
+    for (const base of BASE_DOMAINS) {
+      if (host.endsWith('.' + base)) {
+        const left = host.slice(0, host.length - (base.length + 1))
+        subdomain = left.split('.')[0]
+        break
+      }
+    }
+
+    if (!subdomain) {
+      this.handleServerConnection(ws, request)
+      return
+    }
+    if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/.test(subdomain)) {
+      this.handleServerConnection(ws, request)
+      return
+    }
+
+    if (
+      subdomain &&
+      subdomain !== 'localhost' &&
+      subdomain !== '127.0.0.1' &&
+      !subdomain.match(/^\d+\.\d+\.\d+\.\d+$/)
+    ) {
+      this.handleTunnelConnection(ws, request, subdomain)
+      return
+    }
+  }
+
   // Handle new WebSocket connection
-  private async handleConnection(ws: WebSocket, request: any): Promise<void> {
-    const url = new URL(request.url, `http://${request.headers.host}`)
+  private async handleServerConnection(
+    ws: WebSocket,
+    request: IncomingMessage,
+  ): Promise<void> {
+    const url = new URL(request.url || '', `http://${request.headers.host}`)
     const token = url.searchParams.get('token')
 
     if (!token) {
@@ -191,13 +269,25 @@ export class WebSocketService {
         this.handleMessage(userId, domain, data)
       })
 
+      const heartbeatInterval = setInterval(() => {
+        const conn = this.domainConnections.get(domain)
+        if (conn && conn.userId === userId) {
+          conn.lastActivity = new Date()
+          this.sendToUser(userId, domain, 'heartbeat', {
+            timestamp: new Date().toISOString(),
+          })
+        }
+      }, 10000)
+
       ws.on('close', () => {
         this.handleDisconnection(userId, domain)
+        clearInterval(heartbeatInterval)
       })
 
       ws.on('error', (error) => {
         console.error(`❌ WebSocket error for user ${userId}:`, error)
         this.handleDisconnection(userId, domain)
+        clearInterval(heartbeatInterval)
       })
 
       // Set up ping/pong for connection health
@@ -241,6 +331,9 @@ export class WebSocketService {
         case 'subdomain_response':
           this.passResponse(message.data)
           break
+        case 'ws_outgoing_message':
+          this.handleWsOutgoingMessage(message.data)
+          break
         default:
           console.log(`📨 Received message from user ${userId}:`, message)
       }
@@ -271,6 +364,16 @@ export class WebSocketService {
 
     if (this.domainMetadataStorage.has(domain)) {
       this.domainMetadataStorage.delete(domain)
+    }
+
+    if (this.pendingDomainWsTunnel.has(domain)) {
+      this.pendingDomainWsTunnel.delete(domain)
+    }
+
+    const wsTunnelConnection = this.domainWsTunnelConnection.get(domain)
+    if (wsTunnelConnection) {
+      wsTunnelConnection.close()
+      this.domainWsTunnelConnection.delete(domain)
     }
 
     console.log(`🔌 WebSocket disconnected for user: ${userId} ${domain}`)
@@ -318,7 +421,7 @@ export class WebSocketService {
       throw new Error('Domain not connected or user mismatch')
     }
 
-    this.pendingResponseStorage.set(pendingResponseId, null)
+    this.pendingHttpResponseStorage.set(pendingResponseId, null)
 
     this.increaseDomainTtl(subdomain)
     this.increaseDomainOpn(subdomain)
@@ -362,37 +465,37 @@ export class WebSocketService {
     }
 
     // Check if we have a pending response for this ID
-    if (!this.pendingResponseStorage.has(pendingResponseId)) {
+    if (!this.pendingHttpResponseStorage.has(pendingResponseId)) {
       console.error(`❌ No pending response found for ID: ${pendingResponseId}`)
       return
     }
 
-    this.pendingResponseStorage.set(pendingResponseId, data)
+    this.pendingHttpResponseStorage.set(pendingResponseId, data)
   }
 
   public getStoredResponse(
     pendingResponseId: string,
   ): SubdomainResponse | null {
-    return this.pendingResponseStorage.get(pendingResponseId) || null
+    return this.pendingHttpResponseStorage.get(pendingResponseId) || null
   }
 
   public consumeStoredResponse(
     pendingResponseId: string,
   ): SubdomainResponse | null {
-    const responseData = this.pendingResponseStorage.get(pendingResponseId)
+    const responseData = this.pendingHttpResponseStorage.get(pendingResponseId)
     if (responseData !== null && responseData !== undefined) {
-      this.pendingResponseStorage.delete(pendingResponseId)
+      this.pendingHttpResponseStorage.delete(pendingResponseId)
       return responseData
     }
     return null
   }
 
   public deleteStoredResponse(pendingResponseId: string): void {
-    this.pendingResponseStorage.delete(pendingResponseId)
+    this.pendingHttpResponseStorage.delete(pendingResponseId)
   }
 
   public hasStoredResponse(pendingResponseId: string): boolean {
-    const responseData = this.pendingResponseStorage.get(pendingResponseId)
+    const responseData = this.pendingHttpResponseStorage.get(pendingResponseId)
     return responseData !== null && responseData !== undefined
   }
 
@@ -466,7 +569,7 @@ export class WebSocketService {
 
   public shutdown(): void {
     // Clean up all pending responses
-    this.pendingResponseStorage.clear()
+    this.pendingHttpResponseStorage.clear()
 
     // Close all domain connections
     this.domainConnections.forEach((connection, domain) => {
@@ -480,11 +583,142 @@ export class WebSocketService {
     this.domainConnections.clear()
     this.userDomains.clear()
     this.domainMetadataStorage.clear()
+    this.pendingDomainWsTunnel.clear()
+    this.domainWsTunnelConnection.clear()
 
     this.wss?.close()
     this.server?.close()
 
     console.log('WebSocket server shutdown')
+  }
+
+  private async handleTunnelConnection(
+    ws: WebSocket,
+    request: IncomingMessage,
+    subdomain: string,
+  ): Promise<void> {
+    if (!request.url) {
+      ws.close(1008, 'Missing URL')
+      return
+    }
+    const queries = request.url.split('?')[1]
+    if (!queries) {
+      ws.close(1008, 'Missing queries')
+      return
+    }
+
+    if (!this.domainConnections.has(subdomain)) {
+      ws.close(1008, 'Domain not connected')
+      return
+    }
+
+    const cacheKey = `domain:${subdomain}`
+    let domain: any = Cache.get(cacheKey)
+    if (!domain) {
+      domain = await db?.DomainModel.findOne({ domain: subdomain }).lean()
+      if (domain) {
+        Cache.set(cacheKey, domain, 60_000)
+      }
+    }
+    if (!domain) {
+      ws.close(1008, 'Domain not found')
+      return
+    }
+
+    const existingConnection = this.domainConnections.get(subdomain)
+
+    if (!existingConnection) {
+      ws.close(1008, 'Domain not connected')
+      return
+    }
+    if (existingConnection) {
+      if (existingConnection.ws.readyState !== WebSocket.OPEN) {
+        ws.close(1008, 'Domain not connected')
+        return
+      }
+      if (existingConnection.userId !== domain.userId.toString()) {
+        ws.close(1008, 'Domain not connected')
+        return
+      }
+      if (!existingConnection.link) {
+        ws.close(1008, 'Link not found')
+        return
+      }
+    }
+
+    if (this.pendingDomainWsTunnel.has(subdomain)) {
+      ws.close(1008, 'Domain already connecting')
+      return
+    }
+
+    this.pendingDomainWsTunnel.set(subdomain, true)
+    this.domainWsTunnelConnection.set(subdomain, ws)
+
+    ws.on('close', () => {
+      this.pendingDomainWsTunnel.delete(subdomain)
+      this.domainWsTunnelConnection.delete(subdomain)
+    })
+
+    ws.on('error', (error) => {
+      console.error('❌ Error handling tunnel connection:', error)
+      this.pendingDomainWsTunnel.delete(subdomain)
+      this.domainWsTunnelConnection.delete(subdomain)
+    })
+
+    this.sendToUser(
+      domain.userId.toString(),
+      subdomain,
+      'pending_incoming_ws_connection',
+      {
+        domain: subdomain,
+        url: existingConnection.link + '?' + queries,
+        // headers: request.headers,
+        timestamp: new Date().toISOString(),
+      },
+    )
+
+    const timeoutMs = 2 * 60000 // 1 minute
+    const startTime = Date.now()
+
+    while (Date.now() - startTime < timeoutMs) {
+      if (!this.pendingDomainWsTunnel.has(subdomain)) {
+        break
+      }
+      if (this.pendingDomainWsTunnel.get(subdomain) !== null) {
+        break
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    if (this.pendingDomainWsTunnel.get(subdomain) === null) {
+      ws.close(1008, 'Domain connection timed out')
+      return
+    }
+
+    this.pendingDomainWsTunnel.delete(subdomain)
+
+    ws.on('message', (data) => {
+      WebSocketService.getInstance().sendToUser(
+        domain.userId.toString(),
+        subdomain,
+        'ws_incoming_message',
+        {
+          messageData: data.toString(),
+          timestamp: new Date().toISOString(),
+        },
+      )
+    })
+  }
+
+  private handleWsOutgoingMessage(data: any): void {
+    const { messageData, domain } = data
+    const existingConnection = this.domainWsTunnelConnection.get(domain)
+    if (existingConnection) {
+      existingConnection.send(messageData)
+    } else {
+      console.error('❌ Error sending message to user:', messageData)
+    }
   }
 }
 

@@ -33,3 +33,10 @@ export interface SubdomainResponse {
   contentType?: string
   isBase64?: boolean
 }
+
+export interface PendingWsConnection {
+  domain: string
+  url: string
+  headers: Record<string, string>
+  timestamp: string
+}
