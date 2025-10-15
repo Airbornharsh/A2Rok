@@ -1,15 +1,20 @@
 {
   "name": "a2rok",
-  "version": "1.1.0",
-  "description": "This is helpful for tunneling localhost to internet",
+  "version": "1.1.1",
+  "description": "Multi-protocol tunneling tool to expose local HTTP, HTTPS, and WebSocket servers to the internet",
   "keywords": [
     "tunnel",
     "tunneling",
     "localhost",
     "http",
+    "https",
+    "websocket",
+    "ws",
+    "wss",
     "cli",
     "proxy",
     "expose",
+    "multi-protocol",
     "developer-tools",
     "a2rok"
   ],
