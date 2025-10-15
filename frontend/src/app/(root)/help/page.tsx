@@ -7,7 +7,7 @@ export default function HelpPage() {
         <div>
           <h1 className="text-2xl font-bold">Help & Getting Started</h1>
           <p className="mt-1 text-sm text-zinc-400">
-            Quick guide to install and use A2Rok CLI.
+            Quick guide to install and use A2Rok CLI for HTTP/HTTPS tunneling.
           </p>
         </div>
 
@@ -45,6 +45,11 @@ a2rok --help`}</pre>
               local HTTP server on{' '}
               <code className="text-zinc-200">&lt;port&gt;</code>
             </li>
+            <li>
+              <code className="text-zinc-200">https &lt;link&gt;</code>: Expose
+              an HTTPS server using{' '}
+              <code className="text-zinc-200">&lt;link&gt;</code>
+            </li>
           </ul>
         </section>
 
@@ -63,7 +68,8 @@ a2rok --help`}</pre>
           <div className="rounded-md border border-zinc-800 bg-zinc-950 p-4">
             <pre className="whitespace-pre-wrap text-sm text-zinc-200">{`a2rok login
 a2rok user
-a2rok http 3000`}</pre>
+a2rok http 3000
+a2rok https https://my-domain.com`}</pre>
           </div>
         </section>
       </div>

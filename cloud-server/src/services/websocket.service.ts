@@ -10,6 +10,8 @@ interface UserConnection {
   userId: string
   domain: string
   port: number
+  protocol: string
+  link?: string
   ws: WebSocket
   connectedAt: Date
   lastActivity: Date
@@ -147,6 +149,8 @@ export class WebSocketService {
         userId,
         domain,
         port: Number(url.searchParams.get('port')),
+        protocol: url.searchParams.get('protocol') || 'http',
+        link: url.searchParams.get('link') || undefined,
         ws,
         connectedAt: new Date(),
         lastActivity: new Date(),
@@ -326,6 +330,8 @@ export class WebSocketService {
           pendingResponseId: pendingResponseId,
           domain: subdomain,
           port: domainConnection.port,
+          protocol: domainConnection.protocol,
+          link: domainConnection.link,
           headers: req.preservedHeaders || req.headers,
           rawBody: req.rawBody,
           body: req.body,
@@ -335,7 +341,7 @@ export class WebSocketService {
           method: req.method,
           url: req.fullUrl || req.url,
           reconstructedPath: req.reconstructedPath,
-          protocol: req.originalProtocol || req.protocol,
+          originalProtocol: req.originalProtocol || req.protocol,
           secure:
             req.originalSecure !== undefined ? req.originalSecure : req.secure,
           hostname: req.hostname,

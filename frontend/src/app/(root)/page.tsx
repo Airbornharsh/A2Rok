@@ -7,7 +7,8 @@ export default function Home() {
         <div>
           <h1 className="text-2xl font-bold">A2Rok CLI</h1>
           <p className="mt-1 text-sm text-zinc-400">
-            Tunneling helper to expose your local HTTP server to the internet.
+            Tunneling helper to expose your local HTTP/HTTPS servers to the
+            internet.
           </p>
         </div>
 
@@ -49,6 +50,11 @@ a2rok --help`}
               local HTTP server on{' '}
               <code className="text-zinc-200">&lt;port&gt;</code>
             </li>
+            <li>
+              <code className="text-zinc-200">https &lt;link&gt;</code>: Expose
+              an HTTPS server using{' '}
+              <code className="text-zinc-200">&lt;link&gt;</code>
+            </li>
           </ul>
         </section>
 
@@ -68,7 +74,8 @@ a2rok --help`}
             <pre className="whitespace-pre-wrap text-sm text-zinc-200">
               {`a2rok login
 a2rok user
-a2rok http 3000`}
+a2rok http 3000
+a2rok https https://my-domain.com`}
             </pre>
           </div>
         </section>

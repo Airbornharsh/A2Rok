@@ -3,6 +3,7 @@ import loginCommand from './commands/login'
 import userCommand from './commands/user'
 import logoutCommand from './commands/logout'
 import httpCommand from './commands/http'
+import httpsCommand from './commands/https'
 
 const args = process.argv
 
@@ -15,6 +16,7 @@ Commands:
   login                Sign in to A2Rok
   logout               Sign out of A2Rok
   http <port>          Expose a local HTTP server on <port>
+  https <link>         Expose an HTTPS server using <link>
 
 Options:
   -h, --help           Show this help message
@@ -23,6 +25,7 @@ Examples:
   a2rok login
   a2rok user
   a2rok http 3000
+  a2rok https https://my-domain.com
 `
   console.log(help)
 }
@@ -51,7 +54,7 @@ switch (cmd) {
     httpCommand(args)
     break
   case 'https':
-    console.log('HTTPS...')
+    httpsCommand(args)
     break
   default:
     console.log('Invalid command')

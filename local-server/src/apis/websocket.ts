@@ -11,10 +11,17 @@ let wsConnectionState = {
 const connectWebSocket = async (
   port: number,
   token: string,
+  protocol: string = 'http',
+  link?: string,
 ): Promise<WebSocket | null> => {
   wsConnectionState.lastMessage = 'Connecting to WebSocket server...'
 
-  const ws = new WebSocket(`${WSS_BACKEND_URL}?token=${token}&port=${port}`)
+  let wsUrl = `${WSS_BACKEND_URL}?token=${token}&port=${port}&protocol=${protocol}`
+  if (link) {
+    wsUrl += `&link=${encodeURIComponent(link)}`
+  }
+
+  const ws = new WebSocket(wsUrl)
 
   // Ensure we receive binary frames for compressed messages
   ;(ws as any).binaryType = 'arraybuffer'

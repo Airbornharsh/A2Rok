@@ -29,9 +29,23 @@ class ReqMessageService {
     const useEnhancedData =
       data.rawBody !== undefined && data.reconstructedPath !== undefined
 
-    // Determine the target URL
+    // Determine the target URL with appropriate protocol
     const targetPath = useEnhancedData ? data.reconstructedPath : data.path
-    const targetUrl = `http://localhost:${data.port}${targetPath}`
+    // Use the protocol from the connection, fallback to secure detection
+    const protocol =
+      data.protocol || (data.secure || data.originalSecure ? 'https' : 'http')
+
+    let targetUrl: string
+    if (protocol === 'https' && data.link) {
+      // For HTTPS, use the provided link instead of localhost:port
+      const baseUrl = data.link.endsWith('/')
+        ? data.link.slice(0, -1)
+        : data.link
+      targetUrl = `${baseUrl}${targetPath}`
+    } else {
+      // For HTTP, use localhost:port as before
+      targetUrl = `${protocol}://localhost:${data.port}${targetPath}`
+    }
 
     const incomingHeaders = data.headers || {}
     const hopByHopHeaders = new Set([

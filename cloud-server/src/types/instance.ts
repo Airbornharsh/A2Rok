@@ -2,6 +2,8 @@ export interface SubdomainRequest {
   pendingResponseId: string
   domain: string
   port: number
+  protocol: string
+  link?: string
   headers: Record<string, string>
   body: any
   query: Record<string, string>
@@ -9,10 +11,15 @@ export interface SubdomainRequest {
   path: string
   method: string
   url: string
-  protocol: string
   secure: boolean
   hostname: string
   ip: string
+  rawBody?: string
+  reconstructedPath?: string
+  originalHost?: string
+  originalProtocol?: string
+  originalSecure?: boolean
+  timestamp?: string
 }
 
 export interface SubdomainResponse {
