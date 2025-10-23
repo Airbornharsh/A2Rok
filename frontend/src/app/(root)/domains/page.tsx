@@ -193,7 +193,7 @@ const Page = () => {
                       size="sm"
                       className="w-full"
                       onClick={() =>
-                        window.open(`https://${domain.domain}`, '_blank')
+                        window.open(fullDomain(domain.domain), '_blank')
                       }
                     >
                       <Globe className="mr-2 h-4 w-4" />
