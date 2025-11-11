@@ -19,7 +19,7 @@ const Sidebar = () => {
   return (
     <div
       className={cn(
-        'relative flex h-screen flex-col border-r border-gray-800 bg-gray-900 text-gray-100 transition-all duration-300 ease-in-out',
+        'border-border text-sidebar-foreground relative flex h-screen flex-col border-r bg-[#0c0c0c] transition-all duration-300 ease-in-out',
         collapsed ? 'w-16' : 'w-64',
       )}
     >
@@ -28,7 +28,7 @@ const Sidebar = () => {
         <Button
           variant="secondary"
           size="icon"
-          className="h-6 w-6 rounded-full bg-gray-800 text-gray-200 hover:bg-gray-700"
+          className="bg-secondary text-secondary-foreground hover:bg-secondary/80 h-6 w-6 rounded-full"
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -36,7 +36,7 @@ const Sidebar = () => {
       </div>
 
       {/* Sidebar Header */}
-      <div className="flex h-16 items-center justify-center border-b border-gray-800">
+      <div className="border-border flex h-16 items-center justify-center border-b">
         {!collapsed ? (
           <span className="text-xl font-bold tracking-wide">A2Rok</span>
         ) : (
@@ -56,8 +56,8 @@ const Sidebar = () => {
                 className={cn(
                   'mx-2 flex cursor-pointer items-center gap-3 rounded-lg px-4 py-2 transition-colors',
                   active
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white',
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground',
                 )}
                 onClick={() => (window.location.href = route.href)}
               >
@@ -74,8 +74,8 @@ const Sidebar = () => {
                 className={cn(
                   'mx-2 flex cursor-pointer items-center gap-3 rounded-lg px-4 py-2 transition-colors',
                   active
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white',
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground',
                 )}
               >
                 <Icon size={20} />
@@ -89,7 +89,7 @@ const Sidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-gray-800 p-4 text-xs text-gray-500">
+      <div className="border-border text-muted-foreground border-t p-4 text-xs">
         {!collapsed && <p>© 2025 A2Rok</p>}
       </div>
     </div>

@@ -6,7 +6,7 @@ export default function Home() {
       <div className="mx-auto w-full max-w-3xl space-y-6">
         <div>
           <h1 className="text-2xl font-bold">A2Rok CLI</h1>
-          <p className="mt-1 text-sm text-zinc-400">
+          <p className="text-muted-foreground mt-1 text-sm">
             Tunneling helper to expose your local HTTP/HTTPS and WebSocket
             servers to the internet.
           </p>
@@ -14,8 +14,8 @@ export default function Home() {
 
         <section>
           <h2 className="mb-2 text-lg font-semibold">Installation</h2>
-          <div className="rounded-md border border-zinc-800 bg-zinc-950 p-4">
-            <pre className="whitespace-pre-wrap text-sm text-zinc-200">
+          <div className="border-border bg-card rounded-md border p-4">
+            <pre className="text-foreground whitespace-pre-wrap text-sm">
               {`npm install -g a2rok
 
 a2rok --help`}
@@ -25,8 +25,8 @@ a2rok --help`}
 
         <section>
           <h2 className="mb-2 text-lg font-semibold">Usage</h2>
-          <div className="rounded-md border border-zinc-800 bg-zinc-950 p-4">
-            <pre className="whitespace-pre-wrap text-sm text-zinc-200">
+          <div className="border-border bg-card rounded-md border p-4">
+            <pre className="text-foreground whitespace-pre-wrap text-sm">
               {`a2rok <command> [options]`}
             </pre>
           </div>
@@ -34,45 +34,45 @@ a2rok --help`}
 
         <section>
           <h3 className="mb-2 font-semibold">Commands</h3>
-          <ul className="list-disc space-y-1 pl-6 text-sm text-zinc-300">
+          <ul className="text-muted-foreground list-disc space-y-1 pl-6 text-sm">
             <li>
-              <code className="text-zinc-200">user</code>: Show the current
+              <code className="text-foreground">user</code>: Show the current
               authenticated user
             </li>
             <li>
-              <code className="text-zinc-200">login</code>: Sign in to A2Rok
+              <code className="text-foreground">login</code>: Sign in to A2Rok
             </li>
             <li>
-              <code className="text-zinc-200">logout</code>: Sign out of A2Rok
+              <code className="text-foreground">logout</code>: Sign out of A2Rok
             </li>
             <li>
-              <code className="text-zinc-200">http &lt;port&gt;</code>: Expose a
-              local HTTP server on{' '}
-              <code className="text-zinc-200">&lt;port&gt;</code>
+              <code className="text-foreground">http &lt;port&gt;</code>: Expose
+              a local HTTP server on{' '}
+              <code className="text-foreground">&lt;port&gt;</code>
             </li>
             <li>
-              <code className="text-zinc-200">https &lt;link&gt;</code>: Expose
-              an HTTPS server using{' '}
-              <code className="text-zinc-200">&lt;link&gt;</code>
+              <code className="text-foreground">https &lt;link&gt;</code>:
+              Expose an HTTPS server using{' '}
+              <code className="text-foreground">&lt;link&gt;</code>
             </li>
             <li>
-              <code className="text-zinc-200">ws &lt;link&gt;</code>: Expose a
+              <code className="text-foreground">ws &lt;link&gt;</code>: Expose a
               WebSocket server using{' '}
-              <code className="text-zinc-200">&lt;link&gt;</code>
+              <code className="text-foreground">&lt;link&gt;</code>
             </li>
             <li>
-              <code className="text-zinc-200">wss &lt;link&gt;</code>: Expose a
-              secure WebSocket server using{' '}
-              <code className="text-zinc-200">&lt;link&gt;</code>
+              <code className="text-foreground">wss &lt;link&gt;</code>: Expose
+              a secure WebSocket server using{' '}
+              <code className="text-foreground">&lt;link&gt;</code>
             </li>
           </ul>
         </section>
 
         <section>
           <h3 className="mb-2 font-semibold">Options</h3>
-          <ul className="list-disc space-y-1 pl-6 text-sm text-zinc-300">
+          <ul className="text-muted-foreground list-disc space-y-1 pl-6 text-sm">
             <li>
-              <code className="text-zinc-200">-h, --help</code>: Show the help
+              <code className="text-foreground">-h, --help</code>: Show the help
               message
             </li>
           </ul>
@@ -80,8 +80,8 @@ a2rok --help`}
 
         <section>
           <h2 className="mb-2 text-lg font-semibold">Examples</h2>
-          <div className="rounded-md border border-zinc-800 bg-zinc-950 p-4">
-            <pre className="whitespace-pre-wrap text-sm text-zinc-200">
+          <div className="border-border bg-card rounded-md border p-4">
+            <pre className="text-foreground whitespace-pre-wrap text-sm">
               {`a2rok login
 a2rok user
 a2rok http 3000

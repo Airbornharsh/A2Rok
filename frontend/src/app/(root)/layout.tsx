@@ -81,13 +81,13 @@ function RootLayout({ children }: { children: React.ReactNode }) {
       {isLoadSidebar && <Sidebar />}
       <div className="flex flex-1 flex-col">
         {/* Top navbar */}
-        <div className="flex h-12 items-center justify-between border-b border-zinc-800 px-4 text-sm">
+        <div className="border-border flex h-12 items-center justify-between border-b px-4 text-sm">
           <div className="font-semibold">A2Rok</div>
           <div className="flex items-center gap-2">
             <Button variant="secondary" onClick={() => router.push('/help')}>
               Guide
             </Button>
-            <div className="text-zinc-400">
+            <div className="text-muted-foreground">
               {clerkUser?.emailAddresses?.[0]?.emailAddress ||
                 user?.email ||
                 ''}
