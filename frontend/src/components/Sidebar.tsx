@@ -4,8 +4,16 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { LayoutDashboard, Globe, ChevronLeft, ChevronRight } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import {
+  LayoutDashboard,
+  Globe,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+} from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useClerk } from '@clerk/nextjs'
+import { useAuthStore } from '@/stores/authStore'
 
 const routes = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -15,6 +23,20 @@ const routes = [
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const { signOut } = useClerk()
+  const logout = useAuthStore((state) => state.logout)
+
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirectUrl: '/auth' })
+    } catch (error) {
+      console.error('Error signing out:', error)
+    } finally {
+      logout()
+      router.push('/auth')
+    }
+  }
 
   return (
     <div
@@ -90,7 +112,19 @@ const Sidebar = () => {
 
       {/* Footer */}
       <div className="border-border text-muted-foreground border-t p-4 text-xs">
-        {!collapsed && <p>© 2025 A2Rok</p>}
+        <Button
+          variant="ghost"
+          className="text-muted-foreground hover:text-destructive flex w-full items-center justify-center gap-2"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          {!collapsed && <span>Logout</span>}
+        </Button>
+        {!collapsed && (
+          <p className="mt-2 text-[10px] uppercase tracking-wide">
+            © 2025 A2Rok
+          </p>
+        )}
       </div>
     </div>
   )
