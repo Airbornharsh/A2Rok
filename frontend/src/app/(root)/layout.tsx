@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { getTerminalToken, setTerminalToken } from '@/utils/session'
 import { useAuth, useUser } from '@clerk/nextjs'
 import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 
@@ -84,6 +85,32 @@ function RootLayout({ children }: { children: React.ReactNode }) {
         <div className="border-border flex h-12 items-center justify-between border-b px-4 text-sm">
           <div className="font-semibold">A2Rok</div>
           <div className="flex items-center gap-2">
+            <div className="text-muted-foreground flex items-center gap-3">
+              <Link
+                href="https://twitter.com/airbornharsh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary border-border border-r pr-3 transition-colors"
+              >
+                Twitter
+              </Link>
+              <Link
+                href="https://github.com/airbornharsh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary border-border border-r pr-3 transition-colors"
+              >
+                GitHub
+              </Link>
+              <Link
+                href="https://harshkeshri.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary border-border border-r pr-3 transition-colors"
+              >
+                Portfolio
+              </Link>
+            </div>
             <Button variant="secondary" onClick={() => router.push('/help')}>
               Guide
             </Button>
